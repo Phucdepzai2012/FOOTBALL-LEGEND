@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>⚽ Football Legends Online</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #FFD700;
+  --gold-dark: #e5a800;
+  --red: #ff3b30;
+  --blue: #007AFF;
+  --green: #30D158;
+  --bg1: #0a0e1a;
+  --bg2: #111827;
+  --card: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.12);
+  --text: #f0f4ff;
+  --muted: rgba(240,244,255,0.55);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Nunito',sans-serif;
+  background:var(--bg1);
+  color:var(--text);
+  height:100vh; overflow:hidden;
+  user-select:none;
+}
+
+/* ─── SCREENS ─── */
+.screen { display:none; width:100vw; height:100vh; }
+.screen.active { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+/* ─── LOGIN ─── */
+#loginScreen {
+  background: radial-gradient(ellipse at 50% 0%, #1a2a50 0%, var(--bg1) 70%);
+  position:relative; overflow:hidden;
+}
+#loginScreen::before {
+  content:'';
+  position:absolute; inset:0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.login-logo { font-family:'Lilita One',cursive; font-size:72px; line-height:1; position:relative; }
+.login-logo .football { color:#fff; text-shadow:0 0 40px rgba(255,215,0,0.4); }
+.login-logo .legends { color:var(--gold); text-shadow:0 4px 30px rgba(255,215,0,0.6); }
+.login-sub { color:var(--muted); font-size:16px; margin:12px 0 44px; letter-spacing:0.05em; }
+.btn-google {
+  background:#fff; color:#1a1a2e;
+  border:none; padding:16px 36px; border-radius:50px;
+  font-size:17px; font-weight:800; font-family:'Nunito',sans-serif;
+  cursor:pointer; display:flex; align-items:center; gap:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);
+  transition:transform .2s, box-shadow .2s;
+}
+.btn-google:hover { transform:translateY(-3px); box-shadow:0 14px 40px rgba(0,0,0,0.5); }
+
+/* ─── LOBBY ─── */
+#lobbyScreen { background: radial-gradient(ellipse at 30% 50%, #0d1f3c 0%, var(--bg1) 60%); }
+.lobby-wrap { background:var(--card); backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:24px; padding:40px; width:440px; max-width:95vw; }
+.lobby-title { font-family:'Lilita One',cursive; font-size:32px; color:var(--gold); text-align:center; margin-bottom:8px; }
+.lobby-user { text-align:center; color:var(--muted); font-size:14px; margin-bottom:28px; display:flex; align-items:center; justify-content:center; gap:8px; }
+.lobby-user img { width:28px; height:28px; border-radius:50%; }
+.btn { padding:14px 22px; border-radius:14px; border:none; font-size:16px; font-weight:800; font-family:'Nunito',sans-serif; cursor:pointer; transition:all .18s; width:100%; }
+.btn-primary { background:linear-gradient(135deg,var(--gold),#ff8c00); color:#1a0a00; box-shadow:0 4px 20px rgba(255,215,0,0.25); }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(255,215,0,0.4); }
+.btn-outline { background:transparent; color:var(--text); border:1px solid var(--border); }
+.btn-outline:hover { background:var(--card); }
+.btn-danger { background:linear-gradient(135deg,#ff3b30,#cc0000); color:#fff; }
+.btn-danger:hover { transform:translateY(-2px); }
+.divider { text-align:center; color:var(--muted); font-size:12px; margin:20px 0; position:relative; }
+.divider::before,.divider::after { content:''; position:absolute; top:50%; width:42%; height:1px; background:var(--border); }
+.divider::before { left:0; } .divider::after { right:0; }
+.input-field { width:100%; padding:13px 18px; border-radius:12px; border:1.5px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text); font-size:16px; font-family:'Nunito',sans-serif; outline:none; margin-bottom:12px; transition:border-color .2s; }
+.input-field:focus { border-color:var(--gold); }
+.input-field::placeholder { color:var(--muted); }
+.error-msg { color:#ff6b6b; font-size:13px; text-align:center; margin-top:10px; min-height:18px; }
+
+/* ─── ROOM ─── */
+#roomScreen { background:var(--bg1); padding:20px; }
+.room-layout { display:flex; gap:16px; width:100%; max-width:1000px; height:calc(100vh - 40px); }
+.room-panel { background:var(--card); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:20px; padding:22px; display:flex; flex-direction:column; }
+.room-main { flex:1; }
+.room-chat-panel { flex:0 0 280px; }
+.panel-title { font-size:16px; font-weight:800; color:var(--gold); margin-bottom:16px; }
+.room-code-box { background:rgba(0,0,0,0.3); border:1px dashed var(--gold); border-radius:14px; padding:14px; text-align:center; margin-bottom:18px; cursor:pointer; transition:background .2s; }
+.room-code-box:hover { background:rgba(255,215,0,0.05); }
+.room-code-box small { display:block; color:var(--muted); font-size:11px; margin-bottom:4px; }
+.room-code-val { font-family:'Lilita One',cursive; font-size:34px; color:var(--gold); letter-spacing:10px; }
+.player-slot { background:rgba(0,0,0,0.25); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:10px; min-height:74px; }
+.player-ava { width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg,#3a5f9e,#1a2f5e); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; overflow:hidden; }
+.player-ava img { width:48px; height:48px; border-radius:50%; object-fit:cover; }
+.player-ifo { flex:1; }
+.player-name-r { font-weight:800; font-size:15px; }
+.player-tag { font-size:11px; color:var(--muted); }
+.badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800; display:inline-block; }
+.badge-ready { background:var(--green); color:#002a10; }
+.badge-wait { background:#333; color:var(--muted); }
+.skill-title { font-size:13px; color:var(--muted); margin-bottom:10px; }
+.skill-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-bottom:16px; }
+.skill-pick { background:rgba(0,0,0,0.3); border:2px solid var(--border); border-radius:11px; padding:8px 4px; cursor:pointer; text-align:center; font-family:'Nunito',sans-serif; font-size:10px; font-weight:700; color:var(--muted); transition:all .18s; }
+.skill-pick:hover,.skill-pick.sel { border-color:var(--gold); background:rgba(255,215,0,0.12); color:var(--gold); }
+.skill-pick .si { font-size:22px; display:block; margin-bottom:3px; }
+.room-bottom { display:flex; gap:10px; margin-top:auto; padding-top:14px; }
+/* Chat */
+.chat-msgs { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:12px; padding-right:4px; }
+.chat-msgs::-webkit-scrollbar { width:3px; }
+.chat-msgs::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.chat-bubble { background:rgba(0,0,0,0.3); border-radius:10px; padding:8px 12px; font-size:13px; }
+.chat-bubble .who { font-size:11px; color:var(--gold); font-weight:700; margin-bottom:2px; }
+.chat-row { display:flex; gap:8px; }
+.chat-in { flex:1; padding:10px 14px; border-radius:12px; border:1.5px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text); font-size:13px; font-family:'Nunito',sans-serif; outline:none; }
+.chat-in:focus { border-color:var(--gold); }
+.chat-send { padding:10px 14px; border-radius:12px; border:none; background:var(--gold); color:#1a0a00; font-weight:800; cursor:pointer; font-size:13px; transition:opacity .2s; }
+.chat-send:hover { opacity:.85; }
+
+/* ─── GAME SCREEN ─── */
+#gameScreen { background:#0a0e1a; position:relative; overflow:hidden; }
+#gameCanvas { display:block; }
+#gOverlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+/* Score HUD */
+#scoreHud {
+  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.75); backdrop-filter:blur(12px);
+  border:1px solid var(--border); border-radius:40px;
+  padding:8px 22px; display:flex; align-items:center; gap:14px;
+  pointer-events:none; white-space:nowrap;
+}
+.hud-pname { font-size:13px; font-weight:800; max-width:110px; overflow:hidden; text-overflow:ellipsis; }
+.hud-score { font-family:'Lilita One',cursive; font-size:34px; color:var(--gold); }
+.hud-sep { color:var(--muted); font-size:20px; }
+.hud-timer { font-family:'Lilita One',cursive; font-size:20px; color:#fff; border-left:1px solid var(--border); padding-left:14px; margin-left:4px; }
+/* Skill bar */
+#skillHud {
+  position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+  display:flex; gap:8px; pointer-events:all;
+}
+.sk-slot {
+  width:62px; height:62px; border-radius:14px;
+  border:2px solid var(--border); background:rgba(0,0,0,0.6);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  cursor:pointer; position:relative; transition:all .2s;
+}
+.sk-slot.sel { border-color:var(--gold); box-shadow:0 0 18px rgba(255,215,0,0.45); background:rgba(255,215,0,0.1); }
+.sk-slot .sk-ico { font-size:26px; }
+.sk-slot .sk-num { position:absolute; top:3px; left:7px; font-size:9px; color:var(--muted); font-weight:800; }
+.sk-slot .sk-cd {
+  position:absolute; inset:0; background:rgba(0,0,0,0.65);
+  border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:800; color:#fff;
+}
+/* Game chat */
+#gchat {
+  position:absolute; bottom:85px; right:12px;
+  width:270px; background:rgba(0,0,0,0.7); backdrop-filter:blur(10px);
+  border:1px solid var(--border); border-radius:16px; padding:12px;
+  pointer-events:all;
+}
+#gchat-msgs { max-height:130px; overflow-y:auto; margin-bottom:8px; }
+#gchat-msgs::-webkit-scrollbar { width:2px; }
+#gchat-msgs::-webkit-scrollbar-thumb { background:var(--border); }
+.gchat-line { font-size:12px; margin-bottom:5px; line-height:1.4; }
+.gchat-line .who { color:var(--gold); font-weight:700; }
+#gchat-row { display:flex; gap:6px; }
+#gchat-input { flex:1; padding:7px 11px; border-radius:9px; border:1px solid var(--border); background:rgba(255,255,255,0.08); color:#fff; font-size:12px; font-family:'Nunito',sans-serif; outline:none; }
+#gchat-input:focus { border-color:var(--gold); }
+#gchat-go { padding:7px 11px; border-radius:9px; border:none; background:var(--gold); color:#1a0a00; font-weight:800; cursor:pointer; font-size:12px; }
+#btnExit {
+  position:absolute; top:12px; left:12px;
+  background:rgba(255,59,48,0.15); border:1px solid rgba(255,59,48,0.4);
+  color:#ff6b6b; border-radius:10px; padding:8px 14px; font-size:13px; font-weight:800;
+  cursor:pointer; font-family:'Nunito',sans-serif; pointer-events:all; transition:all .2s;
+}
+#btnExit:hover { background:rgba(255,59,48,0.3); }
+/* Controls hint */
+#controlsHint {
+  position:absolute; top:12px; right:12px;
+  background:rgba(0,0,0,0.6); border:1px solid var(--border); border-radius:12px;
+  padding:8px 12px; font-size:11px; color:var(--muted); line-height:1.7;
+  pointer-events:none;
+}
+.ctrl-key { display:inline-block; background:rgba(255,255,255,0.12); border-radius:4px; padding:1px 5px; font-size:10px; font-weight:700; color:#fff; }
+/* Notif */
+.notif {
+  position:fixed; top:80px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.9); border:1px solid var(--gold); border-radius:40px;
+  padding:10px 28px; font-size:20px; font-weight:800; z-index:999;
+  animation:notifAnim 2.2s forwards; pointer-events:none; white-space:nowrap;
+}
+@keyframes notifAnim {
+  0%   { opacity:0; transform:translateX(-50%) translateY(-16px) scale(.9); }
+  15%  { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+  75%  { opacity:1; }
+  100% { opacity:0; transform:translateX(-50%) translateY(-8px); }
+}
+/* Loading overlay */
+#loading {
+  position:fixed; inset:0; background:var(--bg1);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999; font-family:'Lilita One',cursive; font-size:28px; color:var(--gold);
+}
+</style>
+</head>
+<body>
+<div id="loading">⚽ Đang tải...</div>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="loginScreen" class="screen">
+  <div style="text-align:center;position:relative;z-index:1;">
+    <div class="login-logo">
+      <div class="football">⚽ FOOTBALL</div>
+      <div class="legends">LEGENDS</div>
+    </div>
+    <p class="login-sub">Multiplayer Online · 5 Kỹ Năng · Chat Thời Gian Thực</p>
+    <button class="btn-google" id="btnLogin">
+      <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Đăng nhập với Google
+    </button>
+  </div>
+</div>
+
+<!-- ═══ LOBBY ═══ -->
+<div id="lobbyScreen" class="screen">
+  <div class="lobby-wrap">
+    <div class="lobby-title">🏆 Football Legends</div>
+    <div class="lobby-user" id="userInfo"></div>
+    <button class="btn btn-primary" id="btnCreate" style="margin-bottom:12px;font-size:18px;padding:16px;">🏠 Tạo Phòng Mới</button>
+    <div class="divider">hoặc tham gia phòng</div>
+    <input class="input-field" id="joinCode" placeholder="Nhập mã phòng (6 ký tự)" maxlength="6" style="text-transform:uppercase;letter-spacing:6px;font-size:18px;text-align:center;">
+    <button class="btn btn-outline" id="btnJoin">🚀 Tham Gia Phòng</button>
+    <div class="error-msg" id="lobbyErr"></div>
+  </div>
+</div>
+
+<!-- ═══ ROOM ═══ -->
+<div id="roomScreen" class="screen" style="align-items:stretch;justify-content:stretch;">
+  <div class="room-layout">
+    <div class="room-panel room-main">
+      <div class="room-code-box" id="codeBox" title="Click để copy mã phòng">
+        <small>📋 Mã phòng — Click để copy</small>
+        <div class="room-code-val" id="rCode">------</div>
+      </div>
+      <div class="panel-title">👥 Người chơi</div>
+      <div class="player-slot" id="hostSlot">
+        <div class="player-ava">👤</div>
+        <div class="player-ifo"><div class="player-name-r">Đang chờ...</div><div class="player-tag">—</div></div>
+      </div>
+      <div class="player-slot" id="guestSlot">
+        <div class="player-ava">👤</div>
+        <div class="player-ifo"><div class="player-name-r">Đang chờ...</div><div class="player-tag">—</div></div>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="skill-title">🎯 Chọn kỹ năng active (dùng chuột phải / phím 1–5 trong game):</div>
+        <div class="skill-grid" id="skillPicker">
+          <button class="skill-pick sel" data-s="1" onclick="pickSkill(1)"><span class="si">💥</span>Đá Mạnh</button>
+          <button class="skill-pick" data-s="2" onclick="pickSkill(2)"><span class="si">⚡</span>Dịch Chuyển</button>
+          <button class="skill-pick" data-s="3" onclick="pickSkill(3)"><span class="si">😵</span>Choáng ĐT</button>
+          <button class="skill-pick" data-s="4" onclick="pickSkill(4)"><span class="si">🛡️</span>Tấm Thép</button>
+          <button class="skill-pick" data-s="5" onclick="pickSkill(5)"><span class="si">🔄</span>Đảo Chiều</button>
+        </div>
+      </div>
+      <div class="room-bottom">
+        <button class="btn btn-danger" id="btnLeave" style="flex:1;padding:12px;">← Rời</button>
+        <button class="btn btn-primary" id="btnReady" style="flex:2;padding:12px;font-size:16px;">✅ Sẵn sàng!</button>
+      </div>
+    </div>
+    <div class="room-panel room-chat-panel">
+      <div class="panel-title">💬 Chat phòng</div>
+      <div class="chat-msgs" id="rChatMsgs"></div>
+      <div class="chat-row">
+        <input class="chat-in" id="rChatIn" placeholder="Nhắn tin..." maxlength="100">
+        <button class="chat-send" id="rChatSend">↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GAME ═══ -->
+<div id="gameScreen" class="screen" style="position:relative;">
+  <canvas id="gameCanvas"></canvas>
+  <div id="gOverlay">
+    <div id="scoreHud">
+      <div style="text-align:right;"><div class="hud-pname" id="hP1Name">P1</div><div style="font-size:10px;color:var(--muted)" id="hP1Skill"></div></div>
+      <div class="hud-score" id="hP1Score">0</div>
+      <div class="hud-sep">:</div>
+      <div class="hud-score" id="hP2Score">0</div>
+      <div style="text-align:left;"><div class="hud-pname" id="hP2Name">P2</div><div style="font-size:10px;color:var(--muted)" id="hP2Skill"></div></div>
+      <div class="hud-timer" id="hTimer">3:00</div>
+    </div>
+    <div id="skillHud">
+      <div class="sk-slot sel" id="sk1" onclick="gSelectSkill(1)" title="Đá Mạnh (CD:8s)"><span class="sk-num">1</span><span class="sk-ico">💥</span></div>
+      <div class="sk-slot" id="sk2" onclick="gSelectSkill(2)" title="Dịch Chuyển (CD:10s)"><span class="sk-num">2</span><span class="sk-ico">⚡</span></div>
+      <div class="sk-slot" id="sk3" onclick="gSelectSkill(3)" title="Choáng ĐT (CD:12s)"><span class="sk-num">3</span><span class="sk-ico">😵</span></div>
+      <div class="sk-slot" id="sk4" onclick="gSelectSkill(4)" title="Tấm Thép 5s (CD:15s)"><span class="sk-num">4</span><span class="sk-ico">🛡️</span></div>
+      <div class="sk-slot" id="sk5" onclick="gSelectSkill(5)" title="Đảo Vị Trí (CD:20s)"><span class="sk-num">5</span><span class="sk-ico">🔄</span></div>
+    </div>
+    <div id="gchat">
+      <div id="gchat-msgs"></div>
+      <div id="gchat-row">
+        <input id="gchat-input" placeholder="Chat... (Enter)">
+        <button id="gchat-go" onclick="sendGChat()">↑</button>
+      </div>
+    </div>
+    <button id="btnExit" onclick="exitGame()">✕ Thoát</button>
+    <div id="controlsHint">
+      <span class="ctrl-key">← →</span> Di chuyển &nbsp;
+      <span class="ctrl-key">Space</span> Nhảy<br>
+      <span class="ctrl-key">Click trái</span> Đá &nbsp;
+      <span class="ctrl-key">Click phải</span> Kỹ năng<br>
+      <span class="ctrl-key">1–5</span> Đổi kỹ năng
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged }
+                                   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getDatabase, ref, set, get, onValue, push, update, remove, off, onDisconnect }
+                                   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+const fbCfg = {
+  apiKey:"AIzaSyCDQsJ_NrGK5ouRLS7vFr55OBZQ0nKhHSk",
+  authDomain:"vietnam-life-game.firebaseapp.com",
+  databaseURL:"https://vietnam-life-game-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"vietnam-life-game",
+  storageBucket:"vietnam-life-game.firebasestorage.app",
+  messagingSenderId:"134954120781",
+  appId:"1:134954120781:web:d7f762adb80bfce3140e04",
+  measurementId:"G-39VPPE1F9T"
+};
+const fbApp = initializeApp(fbCfg);
+const auth  = getAuth(fbApp);
+const db    = getDatabase(fbApp);
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+let me = null;           // firebase user
+let roomCode = null;     // current room id
+let isHost = false;
+let mySkill = 1;
+let roomListeners = [];
+
+/* ══════════════════════════════════════
+   UTILS
+══════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function notify(msg,col='var(--gold)'){
+  document.querySelectorAll('.notif').forEach(e=>e.remove());
+  const d=document.createElement('div');
+  d.className='notif'; d.textContent=msg;
+  d.style.borderColor=col; d.style.color=col;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),2300);
+}
+function genCode(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6},()=>c[Math.random()*c.length|0]).join('');
+}
+
+/* ══════════════════════════════════════
+   AUTH
+══════════════════════════════════════ */
+$('btnLogin').onclick = async ()=>{
+  try{ await signInWithPopup(auth,new GoogleAuthProvider()); }
+  catch(e){ alert('Lỗi: '+e.message); }
+};
+
+onAuthStateChanged(auth, user=>{
+  $('loading').style.display='none';
+  me = user;
+  if(user){
+    const ph = user.photoURL ? `<img src="${user.photoURL}" alt="">` : '👋';
+    $('userInfo').innerHTML = `${ph} Xin chào, <b>${esc(user.displayName||user.email)}</b>`;
+    showScreen('lobbyScreen');
+  } else showScreen('loginScreen');
+});
+
+/* ══════════════════════════════════════
+   LOBBY
+══════════════════════════════════════ */
+$('btnCreate').onclick = async ()=>{
+  if(!me) return;
+  const code = genCode();
+  const rr = ref(db,`footrooms/${code}`);
+  await set(rr,{
+    host:{ uid:me.uid, name:me.displayName||'Player', photo:me.photoURL||'' },
+    guest:null, hostReady:false, guestReady:false,
+    hostSkill:1, guestSkill:1, status:'waiting', ts:Date.now()
+  });
+  onDisconnect(rr).remove();
+  roomCode=code; isHost=true; mySkill=1;
+  enterRoom();
+};
+
+$('btnJoin').onclick = async ()=>{
+  const code = $('joinCode').value.toUpperCase().trim();
+  if(code.length!==6){ showLErr('Mã phòng cần đúng 6 ký tự!'); return; }
+  const snap = await get(ref(db,`footrooms/${code}`));
+  if(!snap.exists()){ showLErr('Không tìm thấy phòng!'); return; }
+  const r = snap.val();
+  if(r.guest){ showLErr('Phòng đã đầy!'); return; }
+  if(r.status!=='waiting'){ showLErr('Trận đấu đã bắt đầu!'); return; }
+  await update(ref(db,`footrooms/${code}`),{
+    guest:{ uid:me.uid, name:me.displayName||'Player', photo:me.photoURL||'' }
+  });
+  roomCode=code; isHost=false; mySkill=1;
+  enterRoom();
+};
+$('joinCode').onkeydown=e=>{ if(e.key==='Enter') $('btnJoin').click(); };
+function showLErr(m){ $('lobbyErr').textContent=m; setTimeout(()=>$('lobbyErr').textContent='',3000); }
+
+/* ══════════════════════════════════════
+   SKILL PICKER (lobby)
+══════════════════════════════════════ */
+window.pickSkill = function(n){
+  mySkill=n;
+  document.querySelectorAll('.skill-pick').forEach(b=>b.classList.toggle('sel',+b.dataset.s===n));
+};
+
+/* ══════════════════════════════════════
+   ROOM SCREEN
+══════════════════════════════════════ */
+function enterRoom(){
+  $('rCode').textContent = roomCode;
+  showScreen('roomScreen');
+  const rr = ref(db,`footrooms/${roomCode}`);
+  const uRoom = onValue(rr, snap=>{
+    if(!snap.exists()){ leaveRoom(); return; }
+    const r=snap.val();
+    renderRoomUI(r);
+    if(r.status==='playing'){ cleanListeners(); startGame(r); }
+  });
+  const chatR = ref(db,`footrooms/${roomCode}/chat`);
+  const uChat = onValue(chatR, snap=>{
+    const box=$('rChatMsgs'); box.innerHTML='';
+    if(!snap.exists()) return;
+    Object.values(snap.val()).sort((a,b)=>a.t-b.t).forEach(m=>{
+      box.innerHTML+=`<div class="chat-bubble"><div class="who">${esc(m.n)}</div>${esc(m.m)}</div>`;
+    });
+    box.scrollTop=box.scrollHeight;
+  });
+  roomListeners=[{r:rr,u:uRoom},{r:chatR,u:uChat}];
+}
+
+function renderRoomUI(r){
+  const mkSlot=(el,p,role,ready,isMe)=>{
+    if(!p){ el.innerHTML=`<div class="player-ava">👤</div><div class="player-ifo"><div class="player-name-r">Đang chờ...</div><div class="player-tag">—</div></div>`; return; }
+    el.innerHTML=`
+      <div class="player-ava">${p.photo?`<img src="${p.photo}" alt="">`:'⚽'}</div>
+      <div class="player-ifo">
+        <div class="player-name-r">${role} ${esc(p.name)} ${isMe?'<small style="color:var(--gold)">(Bạn)</small>':''}</div>
+        <div class="player-tag">${role==='🏠'?'Chủ phòng':'Khách'}</div>
+      </div>
+      <span class="badge ${ready?'badge-ready':'badge-wait'}">${ready?'✅ Sẵn sàng':'⏳ Chờ'}</span>`;
+  };
+  mkSlot($('hostSlot'), r.host, '🏠', r.hostReady, r.host&&r.host.uid===me.uid);
+  mkSlot($('guestSlot'), r.guest, '🎮', r.guestReady, r.guest&&r.guest.uid===me.uid);
+}
+
+$('codeBox').onclick=()=>{ navigator.clipboard.writeText(roomCode).then(()=>notify('📋 Đã copy mã phòng!')); };
+
+$('btnReady').onclick = async ()=>{
+  const snap=await get(ref(db,`footrooms/${roomCode}`));
+  if(!snap.exists()) return;
+  const r=snap.val();
+  const rKey=isHost?'hostReady':'guestReady';
+  const sKey=isHost?'hostSkill':'guestSkill';
+  const newVal=!(isHost?r.hostReady:r.guestReady);
+  await update(ref(db,`footrooms/${roomCode}`),{ [rKey]:newVal, [sKey]:mySkill });
+  // If both ready → start
+  const s2=await get(ref(db,`footrooms/${roomCode}`));
+  const r2=s2.val();
+  if(r2.host&&r2.guest&&r2.hostReady&&r2.guestReady){
+    await update(ref(db,`footrooms/${roomCode}`),{status:'playing'});
+  }
+};
+$('btnLeave').onclick=leaveRoom;
+
+async function leaveRoom(){
+  cleanListeners();
+  if(roomCode){
+    if(isHost) await remove(ref(db,`footrooms/${roomCode}`));
+    else await update(ref(db,`footrooms/${roomCode}`),{guest:null,guestReady:false});
+    roomCode=null;
+  }
+  showScreen('lobbyScreen');
+}
+function cleanListeners(){ roomListeners.forEach(l=>off(l.r)); roomListeners=[]; }
+
+// Room chat
+$('rChatSend').onclick = sendRChat;
+$('rChatIn').onkeydown = e=>{ if(e.key==='Enter') sendRChat(); };
+async function sendRChat(){
+  const v=$('rChatIn').value.trim(); if(!v||!roomCode) return;
+  $('rChatIn').value='';
+  await push(ref(db,`footrooms/${roomCode}/chat`),{uid:me.uid,n:me.displayName||'?',m:v,t:Date.now()});
+}
+
+/* ══════════════════════════════════════
+   GAME ENGINE
+══════════════════════════════════════ */
+const C   = $('gameCanvas');
+const ctx = C.getContext('2d');
+const CW  = 800, CH = 450;
+const GY  = 360;   // ground Y (feet)
+const GRAV  = 0.55;
+const SPD   = 4.5;
+const JUMP  = -13;
+const BR    = 14;   // ball radius
+const PR    = 24;   // player radius
+
+// Skill cooldowns (ms)
+const SK_CD = [0,8000,10000,12000,15000,20000];
+const SK_NAMES=['','💥 Đá Mạnh','⚡ Dịch Chuyển','😵 Choáng ĐT','🛡️ Tấm Thép','🔄 Đảo Chiều'];
+
+let GS={}, myP=null, oppP=null, gameActive=false;
+let keys={}, mInput={ kick:false, skill:false };
+let syncTimer=null, timerInt=null, raf=null;
+let chatListener=null;
+
+function makePlayer(x,facing,skill,name){
+  return { x, y:GY, vx:0, vy:0, grounded:true, facing,
+           score:0, stunned:0, shieldEnd:0,
+           selectedSkill:skill, cds:[0,0,0,0,0], kicking:0, name };
+}
+
+function startGame(r){
+  C.width=CW; C.height=CH;
+  GS={
+    running:false, timeLeft:180,
+    ball:{ x:CW/2, y:GY-120, vx:0, vy:0 },
+    p1: makePlayer(200,1,r.hostSkill||1,r.host.name),
+    p2: makePlayer(600,-1,r.guestSkill||1,r.guest.name)
+  };
+  myP  = isHost ? GS.p1 : GS.p2;
+  oppP = isHost ? GS.p2 : GS.p1;
+
+  // HUD
+  $('hP1Name').textContent=GS.p1.name;
+  $('hP2Name').textContent=GS.p2.name;
+  $('hP1Skill').textContent=SK_NAMES[r.hostSkill||1];
+  $('hP2Skill').textContent=SK_NAMES[r.guestSkill||1];
+  $('hP1Score').textContent='0'; $('hP2Score').textContent='0';
+  $('hTimer').textContent='3:00';
+
+  mySkill=myP.selectedSkill;
+  gSelectSkill(mySkill);
+  showScreen('gameScreen');
+  setupControls();
+  listenGameChat();
+  listenOpponent();
+
+  // Countdown
+  let c=3;
+  const ci=setInterval(()=>{
+    notify(c>0?`${c}`:'⚽ BẮT ĐẦU!',c>0?'#fff':'var(--gold)');
+    c--;
+    if(c<0){ clearInterval(ci); GS.running=true; startLoop(); }
+  },1000);
+}
+
+/* ─── Controls ─── */
+function setupControls(){
+  document.onkeydown=e=>{
+    if($('gchat-input')===document.activeElement) return;
+    keys[e.code]=true;
+    if(e.code==='Space') e.preventDefault();
+    if(/^Digit[1-5]$/.test(e.code)) gSelectSkill(+e.code.slice(-1));
+  };
+  document.onkeyup=e=>{ keys[e.code]=false; };
+  C.onmousedown=e=>{
+    e.preventDefault();
+    if(e.button===0) mInput.kick=true;
+    if(e.button===2) mInput.skill=true;
+  };
+  C.onmouseup=e=>{ if(e.button===0) mInput.kick=false; };
+  C.oncontextmenu=e=>e.preventDefault();
+}
+
+window.gSelectSkill=function(n){
+  if(myP) myP.selectedSkill=mySkill=n;
+  for(let i=1;i<=5;i++){
+    const s=$('sk'+i);
+    s.classList.toggle('sel',i===n);
+    // remove old cd overlay if any
+    const old=s.querySelector('.sk-cd'); if(old) old.remove();
+  }
+};
+
+/* ─── Game Loop ─── */
+let lastT=0;
+function startLoop(){
+  if(raf) cancelAnimationFrame(raf);
+  timerInt=setInterval(()=>{
+    if(!GS.running) return;
+    GS.timeLeft=Math.max(0,GS.timeLeft-1);
+    const m=Math.floor(GS.timeLeft/60), s=GS.timeLeft%60;
+    $('hTimer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(GS.timeLeft<=0) endGame();
+  },1000);
+
+  // Sync my state out
+  syncTimer=setInterval(pushMyState,80);
+  // Host also pushes ball
+  if(isHost) setInterval(pushBall,80);
+
+  lastT=performance.now();
+  function frame(now){
+    const dt=Math.min((now-lastT)/16.67,3);
+    lastT=now;
+    if(GS.running){
+      processInput(dt);
+      if(isHost) runBallPhysics(dt);
+      applyGravity(myP,dt);
+    }
+    draw();
+    updateSkillHud();
+    raf=requestAnimationFrame(frame);
+  }
+  raf=requestAnimationFrame(frame);
+}
+
+function processInput(dt){
+  if(!myP) return;
+  const now=Date.now();
+  if(myP.stunned>now) return;
+
+  const left  = keys['ArrowLeft']||keys['KeyA'];
+  const right = keys['ArrowRight']||keys['KeyD'];
+
+  if(left){  myP.vx=-SPD; myP.facing=-1; }
+  else if(right){ myP.vx=SPD;  myP.facing=1;  }
+  else myP.vx*=0.7;
+
+  myP.x+=myP.vx*dt;
+  myP.x=Math.max(42,Math.min(CW-42,myP.x));
+
+  if(keys['Space']&&myP.grounded){ myP.vy=JUMP; myP.grounded=false; }
+
+  if(mInput.kick){ doKick(); mInput.kick=false; }
+  if(mInput.skill){ doSkill(); mInput.skill=false; }
+}
+
+function applyGravity(p,dt){
+  if(!p.grounded) p.vy+=GRAV*dt;
+  p.y+=p.vy*dt;
+  if(p.y>=GY){ p.y=GY; p.vy=0; p.grounded=true; }
+}
+
+function runBallPhysics(dt){
+  const b=GS.ball;
+  b.vy+=GRAV*0.75*dt;
+  b.vx*=0.992;
+  b.x+=b.vx*dt; b.y+=b.vy*dt;
+
+  // Ground bounce
+  if(b.y+BR>=GY){ b.y=GY-BR; b.vy*=-0.55; b.vx*=0.82; }
+  // Ceiling
+  if(b.y-BR<=0){ b.y=BR; b.vy*=-0.6; }
+  // Walls (outside goals)
+  if(b.x-BR<0){ b.x=BR; b.vx=Math.abs(b.vx); }
+  if(b.x+BR>CW){ b.x=CW-BR; b.vx=-Math.abs(b.vx); }
+
+  // Player-ball collisions
+  [GS.p1,GS.p2].forEach(p=>{
+    const cx=p.x, cy=p.y-40;
+    const dx=b.x-cx, dy=b.y-cy;
+    const d=Math.hypot(dx,dy), md=BR+PR;
+    if(d<md&&d>0.01){
+      const nx=dx/d, ny=dy/d;
+      b.x+=nx*(md-d); b.y+=ny*(md-d);
+      const rel=( b.vx-p.vx)*nx+(b.vy-p.vy)*ny;
+      if(rel<0){ b.vx-=rel*nx*1.4; b.vy-=rel*ny*1.4; }
+    }
+  });
+
+  // Shield wall
+  const now=Date.now();
+  if(GS.p1.shieldEnd>now && b.x-BR<80 && b.y>GY-110){
+    b.x=80+BR; b.vx=Math.abs(b.vx)*1.2;
+  }
+  if(GS.p2.shieldEnd>now && b.x+BR>CW-80 && b.y>GY-110){
+    b.x=CW-80-BR; b.vx=-Math.abs(b.vx)*1.2;
+  }
+
+  // Goals
+  const inGoalY = b.y > GY-115 && b.y < GY+10;
+  if(b.x-BR < 28 && inGoalY)  goal(2); // p2 scores
+  if(b.x+BR > CW-28 && inGoalY) goal(1); // p1 scores
+}
+
+function goal(scorer){
+  GS.p1.score+=(scorer===1)?1:0;
+  GS.p2.score+=(scorer===2)?1:0;
+  $('hP1Score').textContent=GS.p1.score;
+  $('hP2Score').textContent=GS.p2.score;
+  const nm=scorer===1?GS.p1.name:GS.p2.name;
+  notify(`⚽ GÔL! ${nm} ghi bàn!`,'#FFD700');
+  if(roomCode) push(ref(db,`footrooms/${roomCode}/chat`),{uid:'system',n:'⚽ Hệ thống',m:`${nm} ghi bàn! ${GS.p1.score}-${GS.p2.score}`,t:Date.now()});
+  // Reset after 1.5s
+  setTimeout(resetPositions,1500);
+}
+function resetPositions(){
+  GS.ball={x:CW/2,y:GY-120,vx:0,vy:0};
+  GS.p1.x=200; GS.p1.y=GY; GS.p1.vx=0; GS.p1.vy=0; GS.p1.grounded=true;
+  GS.p2.x=600; GS.p2.y=GY; GS.p2.vx=0; GS.p2.vy=0; GS.p2.grounded=true;
+}
+
+function endGame(){
+  GS.running=false;
+  clearInterval(timerInt); clearInterval(syncTimer);
+  const s1=GS.p1.score, s2=GS.p2.score;
+  let msg=s1>s2?`🏆 ${GS.p1.name} THẮNG! ${s1}-${s2}`:s2>s1?`🏆 ${GS.p2.name} THẮNG! ${s1}-${s2}`:`🤝 HÒA! ${s1}-${s2}`;
+  notify(msg,'var(--gold)');
+  if(roomCode) push(ref(db,`footrooms/${roomCode}/chat`),{uid:'system',n:'🏆 KẾT QUẢ',m:msg,t:Date.now()});
+  setTimeout(()=>{ cancelAnimationFrame(raf); leaveRoom(); },4000);
+}
+
+/* ─── Kick ─── */
+function doKick(){
+  const now=Date.now();
+  if(!GS.running||myP.stunned>now) return;
+  const b=GS.ball, p=myP;
+  const dx=b.x-p.x, dy=b.y-(p.y-42);
+  if(Math.hypot(dx,dy)<72){
+    const a=Math.atan2(dy,dx);
+    b.vx=Math.cos(a)*11*p.facing*0.5+p.facing*7;
+    b.vy=-7.5;
+    p.kicking=now+350;
+  }
+}
+
+/* ─── Skill ─── */
+function doSkill(){
+  const now=Date.now();
+  if(!GS.running||!myP||myP.stunned>now) return;
+  const sk=myP.selectedSkill, ci=sk-1;
+  if(myP.cds[ci]>now){ notify(`⏳ ${Math.ceil((myP.cds[ci]-now)/1000)}s`,'#888'); return; }
+  myP.cds[ci]=now+SK_CD[sk];
+  const b=GS.ball, p=myP, o=oppP;
+
+  switch(sk){
+    case 1:{ // Power shot
+      const dx=b.x-p.x, dy=b.y-(p.y-42);
+      if(Math.hypot(dx,dy)<110){ b.vx=p.facing*22; b.vy=-11; notify('💥 POWER SHOT!'); }
+      else{ myP.cds[ci]=0; notify('💥 Quá xa bóng!'); }
+      break; }
+    case 2:{ // Teleport kick
+      p.x=b.x-p.facing*28; p.y=Math.min(GY,b.y+38);
+      p.grounded=(p.y>=GY); p.vy=0;
+      b.vx=p.facing*17; b.vy=-13;
+      notify('⚡ TELEPORT KICK!');
+      break; }
+    case 3:{ // Stun opponent
+      if(Math.abs(o.x-p.x)<220){ o.stunned=now+1000; notify('😵 ĐỐI THỦ BỊ CHOÁNG!'); pushEffect({stun:true,target:isHost?'p2':'p1',until:now+1000}); }
+      else{ myP.cds[ci]=0; notify('😵 Quá xa!'); }
+      break; }
+    case 4:{ // Shield
+      p.shieldEnd=now+5000; notify('🛡️ TẤM THÉP KÍCH HOẠT!');
+      break; }
+    case 5:{ // Swap
+      const tx=p.x,ty=p.y;
+      p.x=o.x; p.y=o.y; p.vx=0; p.vy=0;
+      o.x=tx; o.y=ty; o.vx=0; o.vy=0;
+      p.grounded=(p.y>=GY); o.grounded=(o.y>=GY);
+      notify('🔄 ĐÃO VỊ TRÍ!');
+      pushEffect({swap:true});
+      break; }
+  }
+}
+
+/* ─── Firebase sync ─── */
+function pushMyState(){
+  if(!roomCode||!myP) return;
+  const key=isHost?'p1':'p2';
+  update(ref(db,`footrooms/${roomCode}/gs`),{
+    [`${key}x`]:myP.x, [`${key}y`]:myP.y, [`${key}vx`]:myP.vx, [`${key}vy`]:myP.vy,
+    [`${key}f`]:myP.facing, [`${key}k`]:myP.kicking, [`${key}s`]:myP.stunned,
+    [`${key}sh`]:myP.shieldEnd, [`${key}cds`]:myP.cds.join(','),
+    p1sc:GS.p1.score, p2sc:GS.p2.score, tl:GS.timeLeft
+  });
+}
+function pushBall(){
+  if(!roomCode) return;
+  const b=GS.ball;
+  update(ref(db,`footrooms/${roomCode}/gs`),{bx:b.x,by:b.y,bvx:b.vx,bvy:b.vy});
+}
+function pushEffect(e){
+  if(!roomCode) return;
+  update(ref(db,`footrooms/${roomCode}/gs`),{effect:JSON.stringify(e),efft:Date.now()});
+}
+
+function listenOpponent(){
+  const gsRef=ref(db,`footrooms/${roomCode}/gs`);
+  const u=onValue(gsRef,snap=>{
+    if(!snap.exists()) return;
+    const g=snap.val();
+    // Read opponent state
+    const ok=isHost?'p2':'p1';
+    if(g[ok+'x']!==undefined){
+      oppP.x=g[ok+'x']; oppP.y=g[ok+'y'];
+      oppP.vx=g[ok+'vx']; oppP.vy=g[ok+'vy'];
+      oppP.facing=g[ok+'f']; oppP.kicking=g[ok+'k'];
+      oppP.stunned=g[ok+'s']; oppP.shieldEnd=g[ok+'sh'];
+      if(g[ok+'cds']) oppP.cds=g[ok+'cds'].split(',').map(Number);
+    }
+    // Ball (guest reads from host)
+    if(!isHost&&g.bx!==undefined){
+      GS.ball.x=g.bx; GS.ball.y=g.by; GS.ball.vx=g.bvx; GS.ball.vy=g.bvy;
+    }
+    // Scores
+    if(g.p1sc!==undefined){
+      GS.p1.score=g.p1sc; GS.p2.score=g.p2sc;
+      $('hP1Score').textContent=g.p1sc; $('hP2Score').textContent=g.p2sc;
+    }
+    if(g.tl!==undefined){ GS.timeLeft=g.tl; }
+    // Effects
+    if(g.effect&&g.efft&&g.efft>Date.now()-500){
+      const ef=JSON.parse(g.effect);
+      const myKey=isHost?'p1':'p2';
+      if(ef.stun&&ef.target===myKey){ myP.stunned=ef.until; }
+      if(ef.swap){
+        const tx=myP.x,ty=myP.y;
+        myP.x=oppP.x; myP.y=oppP.y;
+        oppP.x=tx; oppP.y=ty;
+      }
+    }
+  });
+  roomListeners.push({r:gsRef,u});
+}
+
+/* ─── Skill HUD ─── */
+function updateSkillHud(){
+  if(!myP) return;
+  const now=Date.now();
+  for(let i=1;i<=5;i++){
+    const slot=$('sk'+i);
+    let cd=slot.querySelector('.sk-cd');
+    const rem=myP.cds[i-1]-now;
+    if(rem>0){
+      if(!cd){ cd=document.createElement('div'); cd.className='sk-cd'; slot.appendChild(cd); }
+      cd.textContent=Math.ceil(rem/1000)+'s';
+      slot.style.opacity='0.55';
+    } else {
+      if(cd) cd.remove();
+      slot.style.opacity='1';
+    }
+  }
+}
+
+/* ─── Game Chat ─── */
+function listenGameChat(){
+  const cr=ref(db,`footrooms/${roomCode}/chat`);
+  const u=onValue(cr,snap=>{
+    const box=$('gchat-msgs'); box.innerHTML='';
+    if(!snap.exists()) return;
+    Object.values(snap.val()).sort((a,b)=>a.t-b.t).slice(-12).forEach(m=>{
+      box.innerHTML+=`<div class="gchat-line"><span class="who">${esc(m.n)}: </span>${esc(m.m)}</div>`;
+    });
+    box.scrollTop=box.scrollHeight;
+  });
+  roomListeners.push({r:cr,u});
+  $('gchat-input').onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') sendGChat(); };
+}
+window.sendGChat=async function(){
+  const v=$('gchat-input').value.trim(); if(!v||!roomCode) return;
+  $('gchat-input').value='';
+  await push(ref(db,`footrooms/${roomCode}/chat`),{uid:me.uid,n:me.displayName||'?',m:v,t:Date.now()});
+};
+
+/* ─── Exit ─── */
+window.exitGame=function(){
+  if(!confirm('Thoát trận?')) return;
+  cancelAnimationFrame(raf);
+  clearInterval(timerInt); clearInterval(syncTimer);
+  GS.running=false;
+  leaveRoom();
+};
+
+/* ══════════════════════════════════════
+   DRAWING
+══════════════════════════════════════ */
+function draw(){
+  ctx.clearRect(0,0,CW,CH);
+  drawSky(); drawClouds(); drawStands(); drawTrack(); drawField(); drawGoals();
+  const now=Date.now();
+  if(GS.p1.shieldEnd>now) drawShield(0,'#44aaff');
+  if(GS.p2.shieldEnd>now) drawShield(CW,'#ff6644');
+  drawPlayer(GS.p1,'#2266dd','#0033aa',1);
+  drawPlayer(GS.p2,'#dd2222','#aa0000',2);
+  drawBall();
+  if(GS.p1.stunned>now) drawStars(GS.p1,now);
+  if(GS.p2.stunned>now) drawStars(GS.p2,now);
+}
+
+function drawSky(){
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#5ba3e0'); g.addColorStop(0.55,'#c5dfff'); g.addColorStop(1,'#b5d8f5');
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+}
+function drawClouds(){
+  ctx.fillStyle='rgba(255,255,255,0.75)';
+  [[90,55,58],[230,38,74],[430,62,65],[620,44,80],[740,58,54]].forEach(([cx,cy,r])=>{
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+r*.65,cy+8,r*.55,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx-r*.55,cy+8,r*.5,0,Math.PI*2); ctx.fill();
+  });
+}
+function drawStands(){
+  ctx.fillStyle='#4a7cbf';
+  ctx.fillRect(0,40,CW,210);
+  const rowCols=['#e55','#fc4','#4af','#7e7','#fa8','#fff'];
+  for(let r=0;r<7;r++) for(let c=0;c<22;c++){
+    ctx.fillStyle=rowCols[(r+c)%6];
+    ctx.fillRect(28+c*34,52+r*26,28,18);
+    ctx.fillStyle='#f8d0a8';
+    ctx.beginPath(); ctx.arc(42+c*34,50+r*26,5,0,Math.PI*2); ctx.fill();
+  }
+}
+function drawTrack(){
+  // Dirt
+  const g=ctx.createLinearGradient(0,GY,0,CH);
+  g.addColorStop(0,'#7a5214'); g.addColorStop(1,'#5a3c0c');
+  ctx.fillStyle=g; ctx.fillRect(0,GY,CW,CH-GY);
+  // Track
+  ctx.fillStyle='#c4783a'; ctx.fillRect(0,GY-22,CW,16);
+  // Grass
+  ctx.fillStyle='#22aa44'; ctx.fillRect(0,GY-10,CW,13);
+}
+function drawField(){
+  ctx.fillStyle='rgba(20,140,50,0.65)';
+  ctx.fillRect(58,GY-115,CW-116,117);
+  ctx.strokeStyle='rgba(255,255,255,0.65)'; ctx.lineWidth=2;
+  // Outline
+  ctx.strokeRect(58,GY-115,CW-116,115);
+  // Center line
+  ctx.beginPath(); ctx.moveTo(CW/2,GY-115); ctx.lineTo(CW/2,GY); ctx.stroke();
+  // Center circle (half)
+  ctx.beginPath(); ctx.arc(CW/2,GY,62,-Math.PI,0); ctx.stroke();
+  // Penalty boxes
+  ctx.strokeRect(58,GY-95,130,97); ctx.strokeRect(CW-188,GY-95,130,97);
+}
+function drawGoals(){
+  const GH=108, GW=28, gy=GY-GH;
+  // Left
+  ctx.fillStyle='rgba(220,230,255,0.12)'; ctx.fillRect(0,gy,GW,GH);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.strokeRect(0,gy,GW,GH);
+  // Right
+  ctx.fillStyle='rgba(220,230,255,0.12)'; ctx.fillRect(CW-GW,gy,GW,GH);
+  ctx.strokeRect(CW-GW,gy,GW,GH);
+  // Nets
+  ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=1;
+  for(let i=0;i<=7;i++){
+    ctx.beginPath(); ctx.moveTo(0,gy+i*14); ctx.lineTo(GW,gy+i*14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CW-GW,gy+i*14); ctx.lineTo(CW,gy+i*14); ctx.stroke();
+  }
+  for(let i=0;i<=4;i++){
+    ctx.beginPath(); ctx.moveTo(i*7,gy); ctx.lineTo(i*7,GY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CW-GW+i*7,gy); ctx.lineTo(CW-GW+i*7,GY); ctx.stroke();
+  }
+}
+
+function drawPlayer(p,c1,c2,num){
+  const x=p.x, y=p.y, now=Date.now();
+  const isMe=(num===1&&isHost)||(num===2&&!isHost);
+  ctx.save();
+  if(p.stunned>now) ctx.globalAlpha=0.8;
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.18)';
+  ctx.beginPath(); ctx.ellipse(x,GY+3,24,6,0,0,Math.PI*2); ctx.fill();
+  // Shirt
+  const sg=ctx.createLinearGradient(x-14,y-65,x+14,y-25);
+  sg.addColorStop(0,c1); sg.addColorStop(1,c2);
+  ctx.fillStyle=sg;
+  ctx.beginPath();
+  ctx.roundRect?ctx.roundRect(x-14,y-64,28,36,6):ctx.fillRect(x-14,y-64,28,36);
+  ctx.fill();
+  // Shorts
+  ctx.fillStyle='#f0f0f0'; ctx.fillRect(x-13,y-29,26,18);
+  // Socks
+  ctx.fillStyle=c1; ctx.fillRect(x-11,y-12,9,14); ctx.fillRect(x+2,y-12,9,14);
+  // Shoes
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath(); ctx.ellipse(x-7+(p.facing<0?3:0),y+4,9,5,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+7+(p.facing<0?-3:0),y+4,9,5,0,0,Math.PI*2); ctx.fill();
+  // Head
+  ctx.fillStyle='#fad5a5';
+  ctx.beginPath(); ctx.arc(x,y-76,28,0,Math.PI*2); ctx.fill();
+  // Highlight on head
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.beginPath(); ctx.arc(x-6,y-84,12,0,Math.PI*2); ctx.fill();
+  // Hair
+  ctx.fillStyle=num===1?'#3a1f0a':'#111155';
+  ctx.beginPath(); ctx.arc(x,y-88,22,Math.PI,0); ctx.fill();
+  ctx.fillRect(x-22,y-90,44,10);
+  if(num===2){ ctx.beginPath(); ctx.arc(x-12,y-82,8,0,Math.PI*2); ctx.fill(); }
+  // Eyes
+  const eo=p.facing*4;
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(x+eo-6,y-77,7,6,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+eo+6,y-77,7,6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1a1a2e'; ctx.beginPath(); ctx.arc(x+eo-5,y-76,4,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+eo+7,y-76,4,0,Math.PI*2); ctx.fill();
+  // Eyebrows
+  ctx.strokeStyle='#3a2a1a'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x+eo-10,y-84); ctx.lineTo(x+eo-1,y-83); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+eo+3,y-83); ctx.lineTo(x+eo+12,y-84); ctx.stroke();
+  // Mouth
+  ctx.strokeStyle='#6a3a2a'; ctx.lineWidth=2;
+  ctx.beginPath();
+  if(p.stunned>now){ ctx.moveTo(x-8,y-64); ctx.lineTo(x+8,y-64); }
+  else { ctx.arc(x+eo,y-69,8,0.15,Math.PI-0.15); }
+  ctx.stroke();
+  // Number on shirt
+  ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font='bold 14px Nunito'; ctx.textAlign='center';
+  ctx.fillText(num,x,y-47);
+  // My player indicator
+  if(isMe){
+    ctx.fillStyle=num===1?'#2266dd':'#dd2222';
+    ctx.beginPath(); ctx.moveTo(x-8,y-112); ctx.lineTo(x+8,y-112); ctx.lineTo(x,y-104); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 9px Nunito'; ctx.fillText('YOU',x,y-116);
+  }
+  // Kicking
+  if(p.kicking>now){
+    ctx.strokeStyle=c1; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(x,y-10); ctx.lineTo(x+p.facing*38,y-22); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBall(){
+  const b=GS.ball;
+  ctx.fillStyle='rgba(0,0,0,0.18)';
+  ctx.beginPath(); ctx.ellipse(b.x,GY+3,BR*.9,BR*.3,0,0,Math.PI*2); ctx.fill();
+  const bg=ctx.createRadialGradient(b.x-4,b.y-4,2,b.x,b.y,BR);
+  bg.addColorStop(0,'#fff'); bg.addColorStop(1,'#ddd');
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.arc(b.x,b.y,BR,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#222'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle='#222';
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2-Math.PI*.5;
+    ctx.beginPath(); ctx.arc(b.x+Math.cos(a)*BR*.52,b.y+Math.sin(a)*BR*.52,4,0,Math.PI*2); ctx.fill();
+  }
+  ctx.beginPath(); ctx.arc(b.x,b.y,4,0,Math.PI*2); ctx.fill();
+}
+
+function drawShield(goalX,col){
+  const sx=goalX===0?27:CW-57;
+  ctx.save();
+  ctx.globalAlpha=0.75;
+  const g=ctx.createLinearGradient(sx,0,sx+30,0);
+  g.addColorStop(0,col); g.addColorStop(1,col.replace('ff','88'));
+  ctx.fillStyle=g; ctx.fillRect(sx,GY-112,30,114);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(sx,GY-112,30,114);
+  // Bolts
+  ctx.globalAlpha=0.5; ctx.fillStyle='#fff'; ctx.font='18px serif';
+  ctx.textAlign='center'; ctx.fillText('⚡',sx+15,GY-55);
+  ctx.restore();
+}
+
+function drawStars(p,now){
+  for(let i=0;i<4;i++){
+    const a=(now/180+i*1.57)%(Math.PI*2);
+    ctx.font='14px serif'; ctx.fillText('⭐',p.x+Math.cos(a)*36-7,p.y-92+Math.sin(a)*13);
+  }
+}
+/* ════════════════════════════════════ */
+</script>
+</body>
+</html>
