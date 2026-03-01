@@ -729,7 +729,7 @@ function startGame(r){
     p1:makePlayer(200,1,r.hostSkill||1,r.host.name,r.host.char||'ronaldo'),
     p2:makePlayer(600,-1,r.guestSkill||1,r.guest.name,r.guest.char||'pele')};
   myP=isHost?GS.p1:GS.p2;oppP=isHost?GS.p2:GS.p1;
-  particles=[];pendingCmd=null;lastKickTime=0;
+  particles=[];pendingCmd=null;lastKickTime=0;ballTarget={x:CW/2,y:GY-100,vx:0,vy:0};
   const sk=SK_DATA[myP.selectedSkill];
   $('skIco').textContent=sk.ico;$('skName').textContent=sk.name;
   $('hP1Name').textContent=GS.p1.name;$('hP2Name').textContent=GS.p2.name;
@@ -763,6 +763,7 @@ function setupControls(){
 window.doSkillFromHud=()=>{mInput.skill=true;setTimeout(()=>{mInput.skill=false;},100);};
 
 let lastT=0;
+let ballTarget={x:400,y:260,vx:0,vy:0};
 function startLoop(){
   if(raf) cancelAnimationFrame(raf);
   timerInt=setInterval(()=>{
@@ -772,16 +773,35 @@ function startLoop(){
     $('hTimer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
     if(GS.timeLeft<=0) endGame();
   },1000);
-  syncTimer=setInterval(pushMyState,60);
-  if(isHost) ballTimer=setInterval(pushBallState,40); // host pushes ball frequently for guest corrections
+  syncTimer=setInterval(pushMyState,50);
+  if(isHost) ballTimer=setInterval(pushBallState,33);
   lastT=performance.now();
   function frame(now){
     const dt=Math.min((now-lastT)/16.67,3);lastT=now;
-    if(GS.running){processInput(dt);applyGravity(myP,dt);runBallPhysics(dt);}
+    if(GS.running){
+      processInput(dt);
+      applyGravity(myP,dt);
+      if(isHost) runBallPhysics(dt);
+      else guestInterpolateBall(dt);
+    }
     updateParticles();decayScreenShake();draw();updateSkillHud();
     raf=requestAnimationFrame(frame);
   }
   raf=requestAnimationFrame(frame);
+}
+
+// Guest smoothly interpolates toward host ball position (no local physics)
+function guestInterpolateBall(dt){
+  const b=GS.ball;
+  const dx=ballTarget.x-b.x, dy=ballTarget.y-b.y;
+  const dist=Math.hypot(dx,dy);
+  if(dist>150){b.x=ballTarget.x;b.y=ballTarget.y;}
+  else{b.x+=dx*0.4;b.y+=dy*0.4;}
+  b.vx=ballTarget.vx;b.vy=ballTarget.vy;
+  b.spin=(b.spin||0)+ballTarget.vx*0.055;
+  b.trail=b.trail||[];
+  b.trail.unshift({x:b.x,y:b.y});
+  if(b.trail.length>10)b.trail.pop();
 }
 
 function processInput(dt){
@@ -830,7 +850,7 @@ function applyGravity(p,dt){
   if(p.y>=GY){p.y=GY;p.vy=0;p.grounded=true;}
 }
 
-/* ══ DRIBBLE — Both players apply to local ball directly ══ */
+/* ══ DRIBBLE ══ */
 function doDribble(){
   if(!GS.running||!myP) return;
   const b=GS.ball,p=myP;
@@ -840,52 +860,45 @@ function doDribble(){
   if(dist>110||dist<4) return;
   const nvx=b.vx*0.7-(dx/dist)*dist*0.1;
   const nvy=b.vy*0.7-(dy/dist)*dist*0.1;
-  // Both players apply to local ball (client-side prediction)
-  b.vx=nvx;b.vy=nvy;
-  // Guest also notifies host
-  if(!isHost&&dist>8){
+  if(isHost){
+    // Host applies directly
+    b.vx=nvx; b.vy=nvy;
+  } else {
+    // Guest sends command to host — do NOT touch local ball
     update(ref(db,`footrooms/${roomCode}/cmd`),{t:'dribble',vx:nvx,vy:nvy,ts:Date.now()});
   }
 }
 
-/* ══ BALL PHYSICS — both players run locally; host is authoritative ══ */
+/* ══ HOST BALL PHYSICS (authoritative) ══ */
 function runBallPhysics(dt){
-  if(!GS.running) return;
+  if(!GS.running||!isHost) return;
   const b=GS.ball;
 
-  // Only HOST applies guest commands
-  if(isHost && pendingCmd&&(Date.now()-pendingCmd.ts)<600){
+  // Apply pending guest command IMMEDIATELY (no delay)
+  if(pendingCmd){
     if(['kick','powershot','teleport','dribble'].includes(pendingCmd.t)){
-      b.vx=pendingCmd.vx;b.vy=pendingCmd.vy;
+      b.vx=pendingCmd.vx; b.vy=pendingCmd.vy;
     }
     pendingCmd=null;
   }
 
-  b.vy+=GRAV*0.72*dt;b.vx*=0.993;
-  b.spin+=b.vx*.055;
-  b.x+=b.vx*dt;b.y+=b.vy*dt;
+  b.vy+=GRAV*0.72*dt; b.vx*=0.993;
+  b.spin+=b.vx*0.055;
+  b.x+=b.vx*dt; b.y+=b.vy*dt;
 
-  // Floor / ceiling
   if(b.y+BR>=GY){b.y=GY-BR;b.vy*=-0.52;b.vx*=0.80;if(Math.abs(b.vy)<0.6)b.vy=0;}
   if(b.y-BR<=28){b.y=BR+28;b.vy*=-0.55;}
 
   const inGoalY=b.y+BR>GY-GOAL_H&&b.y<GY+12;
   if(inGoalY){
-    if(isHost){
-      // Only host triggers official goals
-      if(b.x-BR<0&&!GS.scoring){goal(2);return;}
-      if(b.x+BR>CW&&!GS.scoring){goal(1);return;}
-    } else {
-      // Guest local sim: bounce ball at goal mouth (host will send true result)
-      if(b.x-BR<2){b.x=BR+2;b.vx=Math.abs(b.vx)*0.5;}
-      if(b.x+BR>CW-2){b.x=CW-BR-2;b.vx=-Math.abs(b.vx)*0.5;}
-    }
+    if(b.x-BR<0&&!GS.scoring){goal(2);return;}
+    if(b.x+BR>CW&&!GS.scoring){goal(1);return;}
   } else {
     if(b.x-BR<WALL_L){b.x=WALL_L+BR;b.vx=Math.abs(b.vx)*0.65;}
     if(b.x+BR>CW-WALL_L){b.x=CW-WALL_L-BR;b.vx=-Math.abs(b.vx)*0.65;}
   }
 
-  // Player-ball collision — use own player accurately, opp player approx
+  // Player-ball collision
   [GS.p1,GS.p2].forEach(p=>{
     const cy=p.y-38,dx=b.x-p.x,dy=b.y-cy,d=Math.hypot(dx,dy),md=BR+PR+2;
     if(d<md&&d>0.5){
@@ -896,7 +909,7 @@ function runBallPhysics(dt){
     }
   });
 
-  // Shield
+  // Shield blocks
   const now=Date.now();
   if(GS.p1.shieldEnd>now&&b.x-BR<GOAL_W+55&&b.y>GY-GOAL_H){b.x=GOAL_W+55+BR;b.vx=Math.abs(b.vx)*1.15;}
   if(GS.p2.shieldEnd>now&&b.x+BR>CW-GOAL_W-55&&b.y>GY-GOAL_H){b.x=CW-GOAL_W-55-BR;b.vx=-Math.abs(b.vx)*1.15;}
@@ -904,23 +917,25 @@ function runBallPhysics(dt){
   b.trail.unshift({x:b.x,y:b.y});if(b.trail.length>10)b.trail.pop();
 }
 
-/* ══ KICK — Both players use local ball position (client-side prediction) ══ */
+/* ══ KICK ══ */
 function doKick(){
   const now=Date.now();
   if(!GS.running||!myP||myP.stunned>now) return;
   const b=GS.ball,p=myP;
   const dx=b.x-p.x,dy=b.y-(p.y-42);
-  const kickRange=95; // same for both — local ball is accurate for both now
+  const kickRange=95;
   if(Math.hypot(dx,dy)>kickRange) return;
   const a=Math.atan2(dy,dx);
   const kvx=Math.cos(a)*11+p.facing*7;
   const kvy=-7.5;
   p.kicking=now+380;
   spawnKickParticles(b.x,b.y,false);
-  // Apply to local ball immediately (both players do this)
-  b.vx=kvx;b.vy=kvy;
-  // Guest also sends command to host for authoritative confirmation
-  if(!isHost){
+  if(isHost){
+    // Host applies immediately to authoritative ball
+    b.vx=kvx; b.vy=kvy;
+  } else {
+    // Guest: show particle effect but DO NOT touch local ball.
+    // Send command to host — host will apply and broadcast back.
     update(ref(db,`footrooms/${roomCode}/cmd`),{t:'kick',vx:kvx,vy:kvy,ts:now});
   }
 }
@@ -939,8 +954,8 @@ function doSkill(){
       if(Math.hypot(dx,dy)<130){
         const pvx=p.facing*23,pvy=-13;
         notify('💥 POWER SHOT!','#ff8800');spawnKickParticles(b.x,b.y,true);
-        b.vx=pvx;b.vy=pvy; // apply locally for both
-        if(!isHost) update(ref(db,`footrooms/${roomCode}/cmd`),{t:'powershot',vx:pvx,vy:pvy,ts:now});
+        if(isHost){b.vx=pvx;b.vy=pvy;}
+        else update(ref(db,`footrooms/${roomCode}/cmd`),{t:'powershot',vx:pvx,vy:pvy,ts:now});
       } else {myP.cd=0;notify('💥 Quá xa bóng!','#888');}
       break;
     }
@@ -948,8 +963,8 @@ function doSkill(){
       const tvx=p.facing*17,tvy=-13.5;
       p.x=b.x-p.facing*30;p.y=Math.min(GY,b.y+40);p.grounded=(p.y>=GY);p.vy=0;
       notify('⚡ TELEPORT KICK!','#00e5ff');spawnTeleportParticles(p.x,p.y);
-      b.vx=tvx;b.vy=tvy; // apply locally for both
-      if(!isHost) update(ref(db,`footrooms/${roomCode}/cmd`),{t:'teleport',vx:tvx,vy:tvy,ts:now});
+      if(isHost){b.vx=tvx;b.vy=tvy;}
+      else update(ref(db,`footrooms/${roomCode}/cmd`),{t:'teleport',vx:tvx,vy:tvy,ts:now});
       break;
     }
     case 3:{
@@ -984,10 +999,11 @@ function goal(scorer){
 }
 function resetPositions(){
   GS.ball={x:CW/2,y:GY-100,vx:0,vy:0,spin:0,trail:[]};
+  ballTarget={x:CW/2,y:GY-100,vx:0,vy:0};
   GS.p1.x=200;GS.p1.y=GY;GS.p1.vx=0;GS.p1.vy=0;GS.p1.grounded=true;
   GS.p2.x=600;GS.p2.y=GY;GS.p2.vx=0;GS.p2.vy=0;GS.p2.grounded=true;
   GS.scoring=false;GS.running=true;
-  if(isHost) update(ref(db,`footrooms/${roomCode}/gs`),{scoring:false});
+  if(isHost) update(ref(db,`footrooms/${roomCode}/gs`),{scoring:false,bx:CW/2,by:GY-100,bvx:0,bvy:0});
 }
 function endGame(){
   GS.running=false;clearInterval(timerInt);clearInterval(syncTimer);clearInterval(ballTimer);
@@ -1056,56 +1072,86 @@ function listenOpponent(){
   const cmdRef=ref(db,`footrooms/${roomCode}/cmd`);
 
   const uGs=onValue(gsRef,snap=>{
-    if(!snap.exists()) return;const g=snap.val();const ok=isHost?'p2':'p1';
-    // Sync opponent player state (hard-set is fine — we don't predict them)
+    if(!snap.exists()) return;
+    const g=snap.val();
+    const ok=isHost?'p2':'p1';
+
+    // ── Sync opponent player state ──
     if(g[ok+'x']!==undefined){
-      oppP.x=g[ok+'x'];oppP.y=g[ok+'y'];oppP.vx=g[ok+'vx']||0;oppP.vy=g[ok+'vy']||0;
-      oppP.facing=g[ok+'f']||1;oppP.kicking=g[ok+'k']||0;oppP.stunned=g[ok+'s']||0;
-      oppP.shieldEnd=g[ok+'sh']||0;if(g[ok+'cd'])oppP.cd=g[ok+'cd'];
+      oppP.x=g[ok+'x'];oppP.y=g[ok+'y'];
+      oppP.vx=g[ok+'vx']||0;oppP.vy=g[ok+'vy']||0;
+      oppP.facing=g[ok+'f']||1;
+      oppP.kicking=g[ok+'k']||0;
+      oppP.stunned=g[ok+'s']||0;
+      oppP.shieldEnd=g[ok+'sh']||0;
+      if(g[ok+'cd'])oppP.cd=g[ok+'cd'];
       if(g[ok+'cel'])oppP.celebrating=g[ok+'cel'];
       oppP.dribbling=g[ok+'dr']===1;
     }
-    // ══ GUEST: receive ball correction from host via LERP ══
-    // Guest already runs local physics, so we smoothly correct toward host's authoritative position.
-    // This prevents teleporting while keeping position accurate.
+
+    // ── GUEST: update ballTarget for smooth interpolation ──
+    // Do NOT write to GS.ball directly — interpolation happens in guestInterpolateBall()
     if(!isHost&&g.bx!==undefined){
-      const dx=g.bx-GS.ball.x, dy=g.by-GS.ball.y;
-      const dist=Math.hypot(dx,dy);
-      // If too far off (>80px), snap immediately; otherwise lerp
-      if(dist>80){
-        GS.ball.x=g.bx;GS.ball.y=g.by;
-      } else {
-        GS.ball.x+=dx*0.28;
-        GS.ball.y+=dy*0.28;
-      }
-      // Always sync velocity from host (it's the ground truth for trajectory)
-      GS.ball.vx=g.bvx||0;GS.ball.vy=g.bvy||0;
-      if(g.bspin!==undefined)GS.ball.spin=g.bspin;
+      ballTarget.x=g.bx;
+      ballTarget.y=g.by;
+      ballTarget.vx=g.bvx||0;
+      ballTarget.vy=g.bvy||0;
     }
-    if(!isHost&&g.p1sc!==undefined){GS.p1.score=g.p1sc;GS.p2.score=g.p2sc;$('hP1Score').textContent=g.p1sc;$('hP2Score').textContent=g.p2sc;}
+
+    if(!isHost&&g.p1sc!==undefined){
+      GS.p1.score=g.p1sc;GS.p2.score=g.p2sc;
+      $('hP1Score').textContent=g.p1sc;$('hP2Score').textContent=g.p2sc;
+    }
     if(!isHost&&g.tl!==undefined) GS.timeLeft=g.tl;
+
+    // Goal events (only guest reacts — host triggers them)
     if(!isHost&&g.scoring===true&&!GS.scoring){
       GS.scoring=true;GS.running=false;
-      if(g.goalby){const nm=g.goalby===1?GS.p1.name:GS.p2.name;notify(`⚽ GÔL! ${nm}!`,'#FFD700');triggerScreenShake(14,900);const sp=g.goalby===1?GS.p1:GS.p2;sp.celebrating=Date.now()+2300;spawnGoalParticles(GS.ball.x,GS.ball.y);}
+      if(g.goalby){
+        const nm=g.goalby===1?GS.p1.name:GS.p2.name;
+        notify(`⚽ GÔL! ${nm}!`,'#FFD700');
+        triggerScreenShake(14,900);
+        const sp=g.goalby===1?GS.p1:GS.p2;sp.celebrating=Date.now()+2300;
+        spawnGoalParticles(GS.ball.x,GS.ball.y);
+      }
     }
     if(!isHost&&g.scoring===false&&GS.scoring){
-      // Host reset positions — snap guest's ball and players too
       GS.scoring=false;GS.running=true;
-      GS.ball={x:CW/2,y:GY-100,vx:0,vy:0,spin:0,trail:[]};
+      // Snap ball to center on reset
+      ballTarget={x:CW/2,y:GY-100,vx:0,vy:0};
+      GS.ball.x=CW/2;GS.ball.y=GY-100;GS.ball.vx=0;GS.ball.vy=0;GS.ball.trail=[];
     }
+
+    // Effects (stun, swap)
     if(g.effect&&g.efft&&g.efft>Date.now()-600){
-      try{const ef=JSON.parse(g.effect),myKey=isHost?'p1':'p2';
-      if(ef.stun&&ef.target===myKey) myP.stunned=ef.until;
-      if(ef.swap){const tx=myP.x,ty=myP.y;myP.x=oppP.x;myP.y=oppP.y;myP.vx=0;myP.vy=0;myP.grounded=(myP.y>=GY);oppP.x=tx;oppP.y=ty;oppP.vx=0;oppP.vy=0;oppP.grounded=(oppP.y>=GY);}}catch(e){}
+      try{
+        const ef=JSON.parse(g.effect),myKey=isHost?'p1':'p2';
+        if(ef.stun&&ef.target===myKey) myP.stunned=ef.until;
+        if(ef.swap){
+          const tx=myP.x,ty=myP.y;
+          myP.x=oppP.x;myP.y=oppP.y;myP.vx=0;myP.vy=0;myP.grounded=(myP.y>=GY);
+          oppP.x=tx;oppP.y=ty;oppP.vx=0;oppP.vy=0;oppP.grounded=(oppP.y>=GY);
+        }
+      }catch(e){}
     }
   });
 
+  // ── HOST: listen for guest commands and apply IMMEDIATELY to ball ──
   let lastCmdTs=0;
-  // Host listens for guest commands and applies them as pendingCmd
   const uCmd=isHost?onValue(cmdRef,snap=>{
-    if(!snap.exists()) return;
+    if(!snap.exists()||!GS.running) return;
     const c=snap.val();
-    if(c.ts&&c.ts>lastCmdTs&&Date.now()-c.ts<800){lastCmdTs=c.ts;pendingCmd=c;}
+    if(!c.ts||c.ts<=lastCmdTs) return;
+    const age=Date.now()-c.ts;
+    if(age>800) return; // stale command, ignore
+    lastCmdTs=c.ts;
+    // Apply immediately to authoritative ball
+    const b=GS.ball;
+    if(c.t==='kick'||c.t==='powershot'||c.t==='teleport'){
+      b.vx=c.vx;b.vy=c.vy;
+    } else if(c.t==='dribble'){
+      b.vx=c.vx;b.vy=c.vy;
+    }
   }):null;
 
   roomListeners.push({r:gsRef,u:uGs});
